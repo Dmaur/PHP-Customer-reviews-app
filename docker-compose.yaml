@@ -1,0 +1,52 @@
+services:
+  web-server:
+    build:
+      dockerfile: ./php/php.Dockerfile
+      args:
+        - UID=${UID:-1000}
+        - GID=${GID:-1000}
+    restart: always
+    volumes:
+      - ./app/:/var/www/html/
+      - ./apache/000-default.conf:/etc/apache2/sites-available/000-default.conf
+      - ./php/ini/upload.ini:/usr/local/etc/php/conf.d/uploads.ini
+      - ./php/ini/xdebug.ini:/usr/local/etc/php/conf.d/xdebug.ini
+    environment:
+      - XDEBUG_MODE=${XDEBUG_MODE:-off}
+    ports:
+      - "80:80"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    build:
+      context: ./mysql
+      dockerfile: ./Dockerfile
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_USER_PASSWORD: ${MYSQL_USER_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin" ,"ping", "-h", "127.0.0.1", "-u", "root", "--password=$MYSQL_ROOT_PASSWORD"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - 8080:8080
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  mysql-data:

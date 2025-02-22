@@ -1,0 +1,11 @@
+{
+    "name": "nscc/app",
+    "description": "Basic PHP site with tailwind",
+    "type": "project",
+    "autoload": {
+        "psr-4": {
+            "App\\": "app/"
+        }
+    },
+    "minimum-stability": "stable"
+}
